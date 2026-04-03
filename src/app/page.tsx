@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const packages = [
   {
@@ -146,6 +146,97 @@ function FAQItem({ q, a }: { q: string; a: string }) {
       </button>
       {open && <p className="pb-5 text-gray-600 leading-relaxed">{a}</p>}
     </div>
+  );
+}
+
+function ContactForm() {
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const formRef = useRef<HTMLFormElement>(null);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setStatus("loading");
+    const form = e.currentTarget;
+    const data = {
+      bedrijf: (form.elements.namedItem("bedrijf") as HTMLInputElement).value,
+      website: (form.elements.namedItem("website") as HTMLInputElement).value,
+      email: (form.elements.namedItem("email") as HTMLInputElement).value,
+      telefoon: (form.elements.namedItem("telefoon") as HTMLInputElement).value,
+    };
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        setStatus("success");
+        formRef.current?.reset();
+      } else {
+        setStatus("error");
+      }
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  if (status === "success") {
+    return (
+      <div className="mt-10 max-w-md mx-auto bg-white/10 rounded-2xl p-8 text-white text-center">
+        <div className="text-4xl mb-4">✅</div>
+        <h3 className="text-xl font-bold mb-2">Aanvraag ontvangen!</h3>
+        <p className="text-emerald-100">We nemen binnen 24 uur contact met u op met uw persoonlijke SEO-rapport.</p>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      ref={formRef}
+      className="mt-10 max-w-md mx-auto space-y-4"
+      onSubmit={handleSubmit}
+    >
+      <input
+        type="text"
+        name="bedrijf"
+        placeholder="Bedrijfsnaam"
+        required
+        className="w-full px-5 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-white/40"
+      />
+      <input
+        type="url"
+        name="website"
+        placeholder="Website URL"
+        required
+        className="w-full px-5 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-white/40"
+      />
+      <input
+        type="email"
+        name="email"
+        placeholder="E-mailadres"
+        required
+        className="w-full px-5 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-white/40"
+      />
+      <input
+        type="tel"
+        name="telefoon"
+        placeholder="Telefoonnummer"
+        className="w-full px-5 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-white/40"
+      />
+      <button
+        type="submit"
+        disabled={status === "loading"}
+        className="w-full bg-white text-emerald-600 py-4 rounded-xl text-lg font-bold hover:bg-emerald-50 transition-colors disabled:opacity-70"
+      >
+        {status === "loading" ? "Aanvraag verzenden..." : "Gratis SEO-scan aanvragen"}
+      </button>
+      {status === "error" && (
+        <p className="text-red-200 text-sm">Er is iets misgegaan. Probeer het opnieuw.</p>
+      )}
+      <p className="text-emerald-200 text-sm">
+        Binnen 24 uur ontvangt u uw persoonlijke SEO-rapport per e-mail.
+      </p>
+    </form>
   );
 }
 
@@ -433,48 +524,7 @@ export default function Home() {
           <p className="mt-4 text-lg text-emerald-100">
             Vraag een gratis SEO-scan aan en ontdek hoeveel klanten u mist.
           </p>
-          <form
-            className="mt-10 max-w-md mx-auto space-y-4"
-            action="https://formspree.io/f/placeholder"
-            method="POST"
-          >
-            <input
-              type="text"
-              name="bedrijf"
-              placeholder="Bedrijfsnaam"
-              required
-              className="w-full px-5 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-white/40"
-            />
-            <input
-              type="url"
-              name="website"
-              placeholder="Website URL"
-              required
-              className="w-full px-5 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-white/40"
-            />
-            <input
-              type="email"
-              name="email"
-              placeholder="E-mailadres"
-              required
-              className="w-full px-5 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-white/40"
-            />
-            <input
-              type="tel"
-              name="telefoon"
-              placeholder="Telefoonnummer"
-              className="w-full px-5 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-white/40"
-            />
-            <button
-              type="submit"
-              className="w-full bg-white text-emerald-600 py-4 rounded-xl text-lg font-bold hover:bg-emerald-50 transition-colors"
-            >
-              Gratis SEO-scan aanvragen
-            </button>
-            <p className="text-emerald-200 text-sm">
-              Binnen 24 uur ontvangt u uw persoonlijke SEO-rapport per e-mail.
-            </p>
-          </form>
+          <ContactForm />
         </div>
       </section>
 
